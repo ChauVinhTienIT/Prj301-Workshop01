@@ -37,14 +37,19 @@ public class CategoryDao implements Accessible<Category> {
     private static final String MEMO = "memo";
     
 
-    public CategoryDao() throws ClassNotFoundException, SQLException {
-        DBContext dBContext = new DBContext();
-        con = dBContext.getConnection();
+    public CategoryDao(){
     }
 
     public CategoryDao(ServletContext sc) throws ClassNotFoundException, SQLException {
         this.sc = sc;
         con = getConnect(sc);
+    }
+    
+    
+    private Connection getConnect() throws ClassNotFoundException, SQLException {
+        DBContext dBContext = new DBContext();
+        Connection conn = dBContext.getConnection();
+        return conn;
     }
 
     private Connection getConnect(ServletContext sc) throws ClassNotFoundException, SQLException {
@@ -73,6 +78,7 @@ public class CategoryDao implements Accessible<Category> {
         int typeId = Integer.parseInt(id);
         Category category = null;
         try {
+            makeConnection();
             ps = con.prepareStatement(SELECT_CATEGORY_BY_ID);
             ps.setInt(1, typeId);
             
@@ -85,8 +91,10 @@ public class CategoryDao implements Accessible<Category> {
                 category = new Category(typeId, categoryName, memo);
 
             }
-        } catch (SQLException ex) {
+        } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(CategoryDao.class.getName()).log(Level.SEVERE, null, ex);
+        } finally{
+            closeConnect();
         }
         return category;
     }
@@ -95,9 +103,10 @@ public class CategoryDao implements Accessible<Category> {
     public List<Category> listAll() {
         List<Category> cateList = new ArrayList<>();
         try {
+            makeConnection();
             ps = con.prepareStatement(SELECT_ALL_CATEGORY);
             rs = ps.executeQuery();
-
+            
             while (rs.next()) {
                 int typeId = rs.getInt(TYPE_ID);
                 String categoryName = rs.getNString(CATEGORY_NAME);
@@ -107,10 +116,29 @@ public class CategoryDao implements Accessible<Category> {
                 cateList.add(category);
                 
             }
-        } catch (SQLException ex) {
+        } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(CategoryDao.class.getName()).log(Level.SEVERE, null, ex);
+        } finally{
+            closeConnect();
         }
         return cateList;
+    }
+    
+    
+    private void makeConnection() throws ClassNotFoundException, SQLException{
+        if(con == null || con.isClosed()){
+            con = getConnect();
+        }
+    }
+    
+    private void closeConnect(){
+        try {
+            rs.close();
+            ps.close();
+            con.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(AccountDao.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

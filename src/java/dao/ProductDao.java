@@ -44,14 +44,18 @@ public class ProductDao implements Accessible<Product> {
     private static final String PRICE = "price";
     private static final String DISCOUNT = "discount";
 
-    public ProductDao() throws ClassNotFoundException, SQLException {
-        DBContext dBContext = new DBContext();
-        con = dBContext.getConnection();
+    public ProductDao(){
     }
 
     public ProductDao(ServletContext sc) throws ClassNotFoundException, SQLException {
         this.sc = sc;
         con = getConnect(sc);
+    }
+    
+    private Connection getConnect() throws ClassNotFoundException, SQLException {
+        DBContext dBContext = new DBContext();
+        Connection conn = dBContext.getConnection();
+        return conn;
     }
 
     private Connection getConnect(ServletContext sc) throws ClassNotFoundException, SQLException {
@@ -79,6 +83,7 @@ public class ProductDao implements Accessible<Product> {
     public Product getObjectById(String id) {
         Product product = null;
         try {
+            makeConnection();
             ps = con.prepareStatement(SELECT_PRODUCT_BY_ID);
             ps.setString(1, id);
             rs = ps.executeQuery();
@@ -97,8 +102,10 @@ public class ProductDao implements Accessible<Product> {
                 product = new Product(productId, productName, productImage, brief, postedDate, typeId, account, unit, price, discount);
 
             }
-        } catch (SQLException ex) {
+        } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(ProductDao.class.getName()).log(Level.SEVERE, null, ex);
+        } finally{
+            closeConnect();
         }
         
         return product;
@@ -108,6 +115,7 @@ public class ProductDao implements Accessible<Product> {
     public List<Product> listAll() {
         List<Product> productList = new ArrayList<>();
         try {
+            makeConnection();
             ps = con.prepareStatement(SELECT_ALL_PRODUCT);
             rs = ps.executeQuery();
 
@@ -127,10 +135,27 @@ public class ProductDao implements Accessible<Product> {
                 productList.add(product);
            
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(AccountDao.class.getName()).log(Level.SEVERE, null, ex);
+        } finally{
+            closeConnect();
         }
         return productList;
     }
-
+    
+    private void makeConnection() throws ClassNotFoundException, SQLException{
+        if(con == null || con.isClosed()){
+            con = getConnect();
+        }
+    }
+    
+    private void closeConnect(){
+        try {
+            rs.close();
+            ps.close();
+            con.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(AccountDao.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 }

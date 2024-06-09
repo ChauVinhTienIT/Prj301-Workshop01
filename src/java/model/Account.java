@@ -52,6 +52,10 @@ public class Account {
     public String getFirstName() {
         return firstName;
     }
+    
+    public String getFullName (){
+        return firstName + " " + lastName;
+    } 
 
     public Date getBirthDay() {
         return birthDay;
