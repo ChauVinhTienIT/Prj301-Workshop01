@@ -1,0 +1,116 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package dao;
+
+import context.DBContext;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.servlet.ServletContext;
+import model.Category;
+
+/**
+ *
+ * @author Lenovo
+ */
+public class CategoryDao implements Accessible<Category> {
+
+    private ServletContext sc;
+    private Connection con;
+
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    private static final String SELECT_CATEGORY_BY_ID = "select * from categories where typeId =?";
+    private static final String SELECT_ALL_CATEGORY = "select * from categories";
+    
+    private static final String TYPE_ID = "typeId";
+    private static final String CATEGORY_NAME = "categoryName";
+    private static final String MEMO = "memo";
+    
+
+    public CategoryDao() throws ClassNotFoundException, SQLException {
+        DBContext dBContext = new DBContext();
+        con = dBContext.getConnection();
+    }
+
+    public CategoryDao(ServletContext sc) throws ClassNotFoundException, SQLException {
+        this.sc = sc;
+        con = getConnect(sc);
+    }
+
+    private Connection getConnect(ServletContext sc) throws ClassNotFoundException, SQLException {
+        DBContext dBContext = new DBContext(sc);
+        Connection conn = dBContext.getConnection();
+        return conn;
+    }
+
+    @Override
+    public int insertRec(Category obj) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int updateRec(Category obj) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int deleteRec(Category obj) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Category getObjectById(String id) {
+        int typeId = Integer.parseInt(id);
+        Category category = null;
+        try {
+            ps = con.prepareStatement(SELECT_CATEGORY_BY_ID);
+            ps.setInt(1, typeId);
+            
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                typeId = rs.getInt(TYPE_ID);
+                String categoryName = rs.getNString(CATEGORY_NAME);
+                String memo = rs.getNString(MEMO);
+                
+                category = new Category(typeId, categoryName, memo);
+
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(CategoryDao.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return category;
+    }
+
+    @Override
+    public List<Category> listAll() {
+        List<Category> cateList = new ArrayList<>();
+        try {
+            ps = con.prepareStatement(SELECT_ALL_CATEGORY);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                int typeId = rs.getInt(TYPE_ID);
+                String categoryName = rs.getNString(CATEGORY_NAME);
+                String memo = rs.getNString(MEMO);
+                
+                Category category = new Category(typeId, categoryName, memo);
+                cateList.add(category);
+                
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(CategoryDao.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return cateList;
+    }
+
+}
